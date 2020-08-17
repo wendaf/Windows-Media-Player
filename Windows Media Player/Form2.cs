@@ -18,15 +18,23 @@ namespace Windows_Media_Player
             InitializeComponent();
         }
 
+        //fonction pour recuperer les noms de fichiers
+        private void Form2_Load(object sender, EventArgs e)
+        {
+            listBox1.ValueMember = "Path";
+            listBox1.DisplayMember = "FileName";
+        }
+
         private void ouvrirMusiqueVideoToolStripMenuItem_Click(object sender, EventArgs e)
         {
         openFileDialog1.Filter = "(mp3,wav,mp4,mov,wmv,mpg)|*.mp3;*.wav;*.mp4;*.mov;*.wmv;*.mpg|all files|*.*";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
-                this.Hide();
-                Form1 f1 = new Form1();
-                f1.AxWindowsMediaPlayer1.URL = openFileDialog1.FileName;
-                f1.Show();
+                List<Global> media = new List<Global>();
+                axWindowsMediaPlayer1.URL = openFileDialog1.FileName;
+                string name = Path.GetFileNameWithoutExtension(openFileDialog1.FileName);
+                media.Add(new Global() { FileName = name, Path = openFileDialog1.FileName });
+                listBox1.DataSource = media;
             }
                 
         }
@@ -34,25 +42,37 @@ namespace Windows_Media_Player
         private void ouvrirUnDossierToolStripMenuItem_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog folderBrowserDialog1 = new FolderBrowserDialog();
+            var pl = axWindowsMediaPlayer1.playlistCollection.newPlaylist("default");
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
                 string folderPath = folderBrowserDialog1.SelectedPath;
 
-                string supportedExtensions = "*.mp3,*.wav,*.mp4,*.mov,*.wmv,*.mpg";
+                string supportedExtensions = "*.mp3,*.wav,*.mp4,*.mov,*.wmv,*.mpg,*.png,*jpeg,*.jpg";
+                List<Global> media = new List<Global>();
+                
                 foreach (string mediaPaths in Directory.GetFiles(folderPath, "*.*", SearchOption.AllDirectories).Where(s => supportedExtensions.Contains(Path.GetExtension(s).ToLower())))
                 {
-                    Global._media.Add(mediaPaths);
+                    pl.appendItem(axWindowsMediaPlayer1.newMedia(@mediaPaths));
+
+                    string name = Path.GetFileNameWithoutExtension(mediaPaths);
+                    media.Add(new Global() { FileName = name, Path = mediaPaths });
+
                 }
-                this.Hide();
-                Form1 f1 = new Form1();
-                /// create playlist
-                f1.AxWindowsMediaPlayer1.currentPlaylist = f1.AxWindowsMediaPlayer1.newPlaylist("default", "");
-                foreach (string fn in Global._media)
-                {   ////add playlist from the selected files by the OpenFileDialog
-                    f1.AxWindowsMediaPlayer1.currentPlaylist.appendItem(f1.AxWindowsMediaPlayer1.newMedia(fn));
-                }
-                f1.AxWindowsMediaPlayer1.Ctlcontrols.play();////play
-                f1.Show();
+                listBox1.DataSource = media;
+            }
+            axWindowsMediaPlayer1.currentPlaylist = pl;
+            axWindowsMediaPlayer1.Ctlcontrols.play();
+        }
+
+        //fonction pour l'affichage de la playlist crée par l'utilisateur
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Open media file
+            Global file = listBox1.SelectedItem as Global;
+            if (file != null)
+            {
+                axWindowsMediaPlayer1.URL = file.Path;
+                axWindowsMediaPlayer1.Ctlcontrols.play();
             }
         }
 

@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 
 namespace Windows_Media_Player
 {
-    static class Global
+    public class Global
     {
-        public static List<string> _media = new List<string>();
+        public string FileName { get; set; }
+        public string Path { get; set; }
 
     }
 }
